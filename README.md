@@ -1,16 +1,30 @@
-# flut_memosa
+# Regfate
 
-A new Flutter project.
+Visual timeline planner for long-term goals. Published on Google Play.
 
-## Getting Started
+[![Play Store](https://img.shields.io/badge/Google_Play-Regfate-green)](https://play.google.com/store/apps/details?id=com.regfate.life)
 
-This project is a starting point for a Flutter application.
+## About
+Regfate turns time into a visual space. Instead of scattered task lists, it shows your life path on a continuous timeline — periods, years, and the entire life arc. Offline-first, no ads, no accounts, no tracking.
 
-A few resources to get you started if this is your first Flutter project:
+## Features
+- **Period Ruler** — place goals on a curved timeline arc
+- **Year Ring** — see your position in the current year
+- **Entire Life** — full life timeline view
+- **24-Hour Clock** — analog day view
+- **Calendar Notes** — short notes on any day
+- **Words** — personal quotes and thoughts
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Stack
+- **Language:** Dart
+- **Framework:** Flutter
+- **State:** Provider, ChangeNotifier
+- **Storage:** SharedPreferences (offline)
+- **UI:** CustomPainter, custom animations
+- **Target:** Android 14+ (iOS ready)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Status
+Published on Google Play as a paid app. Actively developed.
+
+## Links
+- [Google Play](https://play.google.com/store/apps/details?id=com.regfate.life)
