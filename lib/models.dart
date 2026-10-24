@@ -1,30 +1,27 @@
-// ═══════════════════════════════════════════════════════════════
-//  MODELS — общие модели данных всего приложения
-// ═══════════════════════════════════════════════════════════════
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-
-// ── Цель на линейке ────────────────────────────────────────────
 
 class GoalItem {
   double progress;
   String text;
   final bool isCustomTick;
   final bool goLeft;
-  bool isDone; // ← добавь
+  bool isDone;
 
   GoalItem({
     required this.progress,
     required this.text,
     this.isCustomTick = false,
     this.goLeft = true,
-    this.isDone = false, // ← добавь
+    this.isDone = false,
   });
 
   Map<String, dynamic> toJson() => {
-    'p': progress, 't': text,
-    'c': isCustomTick, 'l': goLeft,
-    'd': isDone, // ← добавь
+    'p': progress,
+    't': text,
+    'c': isCustomTick,
+    'l': goLeft,
+    'd': isDone,
   };
 
   factory GoalItem.fromJson(Map<String, dynamic> j) => GoalItem(
@@ -32,11 +29,9 @@ class GoalItem {
     text: j['t'] as String,
     isCustomTick: j['c'] as bool? ?? false,
     goLeft: j['l'] as bool? ?? true,
-    isDone: j['d'] as bool? ?? false, // ← добавь
+    isDone: j['d'] as bool? ?? false,
   );
 }
-
-// ── Сохранённая линейка ────────────────────────────────────────
 
 class RulerSaveData {
   final String name;
@@ -67,8 +62,6 @@ class RulerSaveData {
   );
 }
 
-// ── Личное слово пользователя (для экрана "Слова себе") ────────
-
 class UserWord {
   String text;
   UserWord({required this.text});
@@ -78,10 +71,6 @@ class UserWord {
   factory UserWord.fromJson(Map<String, dynamic> json) =>
       UserWord(text: json['text'] as String);
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  ХРАНИЛИЩЕ
-// ═══════════════════════════════════════════════════════════════
 
 class AppStorage {
   static final AppStorage _instance = AppStorage._();
@@ -93,7 +82,6 @@ class AppStorage {
   static const String _birthDateKey = 'birth_date';
   static const String _calendarNotesKey = 'calendar_notes';
 
-  // ── Линейки ────────────────────────────────────────────────
   static const int maxRulers = 20;
   final List<RulerSaveData> rulers = [];
   DateTime? _birthDate;
@@ -183,7 +171,6 @@ class AppStorage {
     await prefs.remove(_birthDateKey);
   }
 
-  // ── Заметки календаря ───────────────────────────────────────
   final Map<String, String> _calendarNotes = {};
 
   String _calKey(DateTime d) =>
@@ -197,10 +184,9 @@ class AppStorage {
     } else {
       _calendarNotes[_calKey(d)] = text.trim();
     }
-    _saveCalendarNotes(); // ← добавить эту строку
+    _saveCalendarNotes();
   }
 
-  // ── Личные слова ────────────────────────────────────────────
   final List<UserWord> words = [];
 
   void addWord(UserWord word) {

@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
 import 'models.dart';
 
-// ═══════════════════════════════════════════════════════════════
-//  ГЛАВНЫЙ ЭКРАН — ГЛОРИНЕС
-//  Постоянные слова автора + кнопка в "Слова себе"
-// ═══════════════════════════════════════════════════════════════
-
-// Постоянные афоризмы — только автор меняет (прямо в коде)
 const List<String> _authorWords = [
   'He who fails to complete the task on time has not lost. Because it can be done later — the main thing is not to give up until the task is completed.',
   'The time you wasted going in the wrong direction showed you where you really needed to go.',
   'The most important things in life almost never happen according to plan. They happen because you did not quit.',
   'Most people overestimate a year and underestimate ten years. Do not panic about the first and do not forget the second.',
-  //'Start. The rest will follow.',
 ];
 
 class GlorinesScreen extends StatelessWidget {
@@ -39,7 +32,6 @@ class GlorinesScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
         children: [
-          // ── Метка раздела ──────────────────────────────────
           /*
           const Padding(
             padding: EdgeInsets.only(bottom: 16),
@@ -53,12 +45,10 @@ class GlorinesScreen extends StatelessWidget {
             ),
           ),
           */
-          // ── Постоянные слова автора ────────────────────────
           ..._authorWords.map((text) => _AuthorWordCard(text: text)),
 
           const SizedBox(height: 32),
 
-          // ── Кнопка в "Слова себе" ──────────────────────────
           GestureDetector(
             onTap: () => Navigator.push(
               context,
@@ -91,10 +81,6 @@ class GlorinesScreen extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  КАРТОЧКА СЛОВА АВТОРА
-// ═══════════════════════════════════════════════════════════════
-
 class _AuthorWordCard extends StatelessWidget {
   final String text;
   const _AuthorWordCard({required this.text});
@@ -112,7 +98,6 @@ class _AuthorWordCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Вертикальная линия слева — как засечка на линейке
           Container(
             width: 1.5,
             height: 14,
@@ -136,10 +121,6 @@ class _AuthorWordCard extends StatelessWidget {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  ЭКРАН "СЛОВА СЕБЕ"
-// ═══════════════════════════════════════════════════════════════
 
 class WordsToSelfScreen extends StatefulWidget {
   const WordsToSelfScreen({super.key});
@@ -260,9 +241,6 @@ class _WordsToSelfScreenState extends State<WordsToSelfScreen> {
       ),
       body: Column(
         children: [
-          // ── Слова автора вверху (компактно) ───────────────────
-
-          // ── Список слов пользователя ──────────────────────────
           Expanded(
             child: words.isEmpty
                 ? const Center(
@@ -287,7 +265,6 @@ class _WordsToSelfScreenState extends State<WordsToSelfScreen> {
                   ),
           ),
 
-          // ── Поле ввода + кнопка "добавить слова" ─────────────
           Container(
             padding: EdgeInsets.fromLTRB(
               16,
@@ -379,10 +356,6 @@ class _WordsToSelfScreenState extends State<WordsToSelfScreen> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  КАРТОЧКА СЛОВА ПОЛЬЗОВАТЕЛЯ
-// ═══════════════════════════════════════════════════════════════
-
 class _SwipeWordTile extends StatefulWidget {
   final Widget child;
   final VoidCallback onDelete;
@@ -403,7 +376,6 @@ class _SwipeWordTileState extends State<_SwipeWordTile>
   late AnimationController _ctrl;
   late Animation<double> _anim;
 
-  // -1 = влево (delete), 0 = нейтраль, 1 = вправо (edit)
   int _direction = 0;
   static const double _revealOffset = 64.0;
 
@@ -429,15 +401,12 @@ class _SwipeWordTileState extends State<_SwipeWordTile>
   void _onDragEnd(DragEndDetails d) {
     final v = d.primaryVelocity ?? 0;
     if (v < -200 && _direction == 0) {
-      // свайп влево → delete
       setState(() => _direction = -1);
       _ctrl.forward();
     } else if (v > 200 && _direction == 0) {
-      // свайп вправо → edit
       setState(() => _direction = 1);
       _ctrl.forward();
     } else if (_direction != 0) {
-      // закрыть
       _ctrl.reverse().then((_) {
         if (mounted) setState(() => _direction = 0);
       });
@@ -471,7 +440,6 @@ class _SwipeWordTileState extends State<_SwipeWordTile>
           final offset = _anim.value * _revealOffset * _direction;
           return Stack(
             children: [
-              // ── Кнопка DELETE (справа, при свайпе влево) ──
               if (_direction == -1)
                 Positioned(
                   right: 0,
@@ -507,7 +475,6 @@ class _SwipeWordTileState extends State<_SwipeWordTile>
                   ),
                 ),
 
-              // ── Кнопка EDIT (слева, при свайпе вправо) ────
               if (_direction == 1)
                 Positioned(
                   left: 0,
@@ -546,7 +513,6 @@ class _SwipeWordTileState extends State<_SwipeWordTile>
                   ),
                 ),
 
-              // ── Сама карточка — сдвигается ─────────────────
               Transform.translate(offset: Offset(offset, 0), child: child),
             ],
           );

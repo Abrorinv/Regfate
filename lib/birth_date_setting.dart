@@ -1,17 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models.dart';
 
-// ═══════════════════════════════════════════════════════════════
-//  ВИДЖЕТ НАСТРОЕК — Дата рождения
-//
-//  Вставь в свой экран настроек:
-//    BirthDateSettingTile(
-//      onChanged: () => setState(() {}),  // обновить UI настроек
-//    )
-// ═══════════════════════════════════════════════════════════════
-
 class BirthDateSettingTile extends StatefulWidget {
-  /// Вызывается после сохранения новой даты.
   final VoidCallback? onChanged;
 
   const BirthDateSettingTile({super.key, this.onChanged});
@@ -63,7 +53,6 @@ class _BirthDateSettingTileState extends State<BirthDateSettingTile> {
         ),
         child: Row(
           children: [
-            // Иконка
             Container(
               width: 34,
               height: 34,
@@ -81,7 +70,6 @@ class _BirthDateSettingTileState extends State<BirthDateSettingTile> {
             ),
             const SizedBox(width: 14),
 
-            // Текст
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,7 +96,6 @@ class _BirthDateSettingTileState extends State<BirthDateSettingTile> {
               ),
             ),
 
-            // Стрелка
             const Icon(Icons.chevron_right, color: Color(0xFF333355), size: 20),
           ],
         ),
@@ -116,8 +103,6 @@ class _BirthDateSettingTileState extends State<BirthDateSettingTile> {
     );
   }
 }
-
-// ── Нижний лист редактирования ─────────────────────────────────
 
 class _BirthDateEditSheet extends StatefulWidget {
   final DateTime? initial;
@@ -208,7 +193,6 @@ class _BirthDateEditSheetState extends State<_BirthDateEditSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Полоска-рукоятка
             Center(
               child: Container(
                 width: 36,
@@ -233,7 +217,6 @@ class _BirthDateEditSheetState extends State<_BirthDateEditSheet> {
 
             const SizedBox(height: 32),
 
-            // Барабаны
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -283,7 +266,6 @@ class _BirthDateEditSheetState extends State<_BirthDateEditSheet> {
 
             const SizedBox(height: 36),
 
-            // Кнопка сохранить
             GestureDetector(
               onTap: _save,
               child: Container(
@@ -328,8 +310,6 @@ class _BirthDateEditSheetState extends State<_BirthDateEditSheet> {
     );
   }
 }
-
-// ── Барабанный пикер для настроек (чуть компактнее) ───────────
 
 class _SettingsDrum extends StatefulWidget {
   final FixedExtentScrollController controller;

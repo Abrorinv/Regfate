@@ -2,10 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'models.dart';
 
-// ═══════════════════════════════════════════════════════════════
-//  ГЕОМЕТРИЯ
-// ═══════════════════════════════════════════════════════════════
-
 class RulerGeometry {
   final double screenWidth;
   final double screenHeight;
@@ -45,10 +41,6 @@ class RulerGeometry {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  ЗАЧЁРКИВАНИЕ  ~~текст~~
-// ═══════════════════════════════════════════════════════════════
-
 List<InlineSpan> parseStrikethrough(String text, TextStyle base) {
   final spans = <InlineSpan>[];
   final re = RegExp(r'~~(.*?)~~', dotAll: true);
@@ -76,10 +68,6 @@ List<InlineSpan> parseStrikethrough(String text, TextStyle base) {
   return spans;
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  ГЁТЕ
-// ═══════════════════════════════════════════════════════════════
-
 class RulerTick {
   final double progress;
   final String? label;
@@ -95,8 +83,13 @@ class RulerTick {
 }
 
 List<RulerTick> buildRulerTicks(DateTime start, DateTime end, DateTime now) {
-  final diff = end.difference(start).inDays;
+  final diff = end.difference(start);
+  final totalMinutes = diff.inMinutes;
+  final totalDays = diff.inDays;
   final List<RulerTick> ticks = [];
+
+  if (totalMinutes <= 0) return ticks;
+
   const mo = [
     'Jan',
     'Feb',
@@ -111,121 +104,103 @@ List<RulerTick> buildRulerTicks(DateTime start, DateTime end, DateTime now) {
     'Nov',
     'Dec',
   ];
-  bool sd(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
   String z(int n) => n.toString().padLeft(2, '0');
 
-  if (diff == 0) {
-    for (int h = 0; h <= 48; h++) {
-      final tm = h * 30;
-      final hr = tm ~/ 60;
-      final mn = tm % 60;
-      final isP = mn == 0 && hr % 3 == 0;
-      final isN =
-          sd(start, now) && hr == now.hour && (mn - now.minute).abs() < 30;
-      ticks.add(
-        RulerTick(
-          progress: h / 48.0,
-          label: isP ? '${z(hr)}:00' : null,
-          isPsych: isP,
-          isNow: isN,
-        ),
-      );
-    }
-  } else if (diff <= 7) {
-    final total = diff * 4;
-    for (int i = 0; i <= total; i++) {
-      final d = start.add(Duration(hours: i * 6));
-      final isP = d.hour == 0;
-      final isN = sd(d, now);
-      ticks.add(
-        RulerTick(
-          progress: i / total.toDouble(),
-          label: isP ? '${d.day} ${mo[d.month - 1]}' : null,
-          isPsych: isP,
-          isNow: isN,
-        ),
-      );
-    }
-  } else if (diff <= 90) {
-    for (int i = 0; i <= diff; i++) {
-      final d = start.add(Duration(days: i));
-      final isP = d.day == 1 || i == 0 || i == diff || d.day % 7 == 0;
-      final isN = sd(d, now);
-      ticks.add(
-        RulerTick(
-          progress: i / diff.toDouble(),
-          label: isP ? '${d.day} ${mo[d.month - 1]} ${d.year}' : null,
-          isPsych: isP,
-          isNow: isN,
-        ),
-      );
-    }
-  } else if (diff <= 365 * 3) {
-    int mc = 0;
-    DateTime cur = DateTime(start.year, start.month);
-    int total = (end.year - start.year) * 12 + (end.month - start.month);
-    if (total < 1) total = 1;
-    while (!cur.isAfter(end)) {
-      final isP =
-          cur.month == 1 ||
-          cur.month == 4 ||
-          cur.month == 7 ||
-          cur.month == 10 ||
-          mc == 0 ||
-          !cur.isBefore(end);
-      final isN = cur.year == now.year && cur.month == now.month;
-      ticks.add(
-        RulerTick(
-          progress: (mc / total).clamp(0.0, 1.0),
-          label: isP ? '${mo[cur.month - 1]} ${cur.year}' : null,
-          isPsych: isP,
-          isNow: isN,
-        ),
-      );
-      mc++;
-      cur = cur.month == 12
-          ? DateTime(cur.year + 1, 1)
-          : DateTime(cur.year, cur.month + 1);
-    }
-  } else {
-    final totalY = end.year - start.year;
-    for (int y = start.year; y <= end.year; y++) {
-      final i = y - start.year;
-      final isP = y % 5 == 0 || i == 0 || i == totalY;
-      final isN = y == now.year;
-      ticks.add(
-        RulerTick(
-          progress: totalY > 0 ? (i / totalY).clamp(0.0, 1.0) : 0.0,
-          label: isP ? '$y' : null,
-          isPsych: isP,
-          isNow: isN,
-        ),
-      );
-    }
-  }
-  // Минимум 6 гёте — добавляем промежуточные без подписей
-  while (ticks.length < 6) {
-    final extra = <RulerTick>[];
-    for (int i = 0; i < ticks.length - 1; i++) {
-      final mid = (ticks[i].progress + ticks[i + 1].progress) / 2;
-      final tooClose = ticks.any((t) => (t.progress - mid).abs() < 0.005);
-      if (!tooClose) {
-        extra.add(
-          RulerTick(progress: mid, label: null, isPsych: false, isNow: false),
-        );
+  int pickStep(double target, List<int> steps) {
+    int best = steps.first;
+    double minDiff = double.infinity;
+    for (var s in steps) {
+      final d = (s - target).abs();
+      if (d < minDiff) {
+        minDiff = d;
+        best = s;
       }
     }
-    if (extra.isEmpty) break;
-    ticks.addAll(extra);
-    ticks.sort((a, b) => a.progress.compareTo(b.progress));
+    return best;
   }
+
+  if (totalDays <= 4) {
+    final target = totalMinutes / 12.0;
+    final step = pickStep(target, [
+      5,
+      10,
+      15,
+      30,
+      60,
+      120,
+      180,
+      360,
+      720,
+      1440,
+    ]);
+
+    for (int m = 0; m <= totalMinutes; m += step) {
+      final d = start.add(Duration(minutes: m));
+      final nextD = d.add(Duration(minutes: step));
+      final isN = !now.isBefore(d) && now.isBefore(nextD);
+
+      ticks.add(
+        RulerTick(
+          progress: m / totalMinutes.toDouble(),
+          label: step < 60 ? '${z(d.hour)}:${z(d.minute)}' : '${z(d.hour)}:00',
+          isPsych: true,
+          isNow: isN,
+        ),
+      );
+    }
+  } else if (totalDays <= 120) {
+    final target = totalDays / 12.0;
+    final step = pickStep(target, [1, 2, 3, 5, 7, 10, 14, 21, 30]);
+
+    for (int i = 0; i <= totalDays; i += step) {
+      final d = start.add(Duration(days: i));
+      final nextD = d.add(Duration(days: step));
+      final isN = !now.isBefore(d) && now.isBefore(nextD);
+
+      ticks.add(
+        RulerTick(
+          progress: i / totalDays.toDouble(),
+          label: '${d.day} ${mo[d.month - 1]}',
+          isPsych: true,
+          isNow: isN,
+        ),
+      );
+    }
+  } else {
+    int totalMonths = (end.year - start.year) * 12 + (end.month - start.month);
+    if (totalMonths < 1) totalMonths = 1;
+
+    final target = totalMonths / 12.0;
+    final step = pickStep(target, [1, 2, 3, 4, 6, 12, 24, 60, 120, 240, 600]);
+
+    DateTime cur = DateTime(start.year, start.month);
+    int m = 0;
+
+    while (m <= totalMonths) {
+      final nextCur = DateTime(cur.year, cur.month + step);
+      final isN = !now.isBefore(cur) && now.isBefore(nextCur);
+      final isLast = m >= totalMonths;
+
+      ticks.add(
+        RulerTick(
+          progress: isLast ? 1.0 : (m / totalMonths),
+          label: step >= 12
+              ? '${cur.year}'
+              : '${mo[cur.month - 1]} ${cur.year}',
+          isPsych: true,
+          isNow: isN,
+        ),
+      );
+
+      if (isLast) break;
+
+      m += step;
+      cur = DateTime(cur.year, cur.month + step);
+    }
+  }
+
   return ticks;
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  ДИАЛОГ СОХРАНЕНИЯ
-// ═══════════════════════════════════════════════════════════════
 
 class SaveNameDialog extends StatefulWidget {
   const SaveNameDialog({super.key});
@@ -300,27 +275,22 @@ class _SaveNameDialogState extends State<SaveNameDialog> {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  ЭКРАН ЛИНЕЙКИ
-// ═══════════════════════════════════════════════════════════════
-
 class RulerScreen extends StatefulWidget {
   final DateTime start, end;
   final List<GoalItem>? savedGoals;
-  final int? existingIndex; // новое поле
+  final int? existingIndex;
   const RulerScreen({
     super.key,
     required this.start,
     required this.end,
     this.savedGoals,
-    this.existingIndex, // новый параметр
+    this.existingIndex,
   });
   @override
   State<RulerScreen> createState() => _RulerScreenState();
 }
 
 class _RulerScreenState extends State<RulerScreen> {
-  // Скролл / зум
   double _scale = 1.0,
       _scaleBase = 1.0,
       _scroll = 0.0,
@@ -329,10 +299,8 @@ class _RulerScreenState extends State<RulerScreen> {
   bool _wasTap = false;
   Offset _tapDown = Offset.zero;
 
-  // Цели
   final List<GoalItem> _goals = [];
 
-  // Редактор
   double? _editP;
   GoalItem? _editExisting;
   bool _editIsCustom = false;
@@ -340,7 +308,6 @@ class _RulerScreenState extends State<RulerScreen> {
   final TextEditingController _editCtrl = TextEditingController();
   final FocusNode _editFocus = FocusNode();
 
-  // Размеры
   double _bodyW = 375.0, _bodyH = 600.0;
 
   RulerGeometry get _geo => RulerGeometry(
@@ -376,8 +343,6 @@ class _RulerScreenState extends State<RulerScreen> {
     super.dispose();
   }
 
-  // ── Зачёркивание ───────────────────────────────────────────
-
   void _toggleStrikethrough() {
     final sel = _editCtrl.selection;
     if (!sel.isValid || sel.isCollapsed) return;
@@ -404,12 +369,6 @@ class _RulerScreenState extends State<RulerScreen> {
     _autoSaveIfExisting();
   }
 
-  // ── Отметить как сделанное ─────────────────────────────────
-
-  //void _toggleDone()
-
-  // ── Поиск / проверки ───────────────────────────────────────
-
   GoalItem? _findGoal(double p) {
     for (final g in _goals) {
       if ((g.progress - p).abs() < 0.004) return g;
@@ -428,8 +387,6 @@ class _RulerScreenState extends State<RulerScreen> {
     }
     return false;
   }
-
-  // ── Тап ────────────────────────────────────────────────────
 
   void _handleTap(Offset pos) {
     if (_editP != null) {
@@ -542,7 +499,6 @@ class _RulerScreenState extends State<RulerScreen> {
   }
 
   Future<void> _onSave() async {
-    // 1. Подготавливаем список целей (эта часть осталась без изменений)
     final goalsToSave = _goals
         .map(
           (g) => GoalItem(
@@ -555,30 +511,25 @@ class _RulerScreenState extends State<RulerScreen> {
         )
         .toList();
 
-    // 2. Если линейка была открыта из сохранённых (передан индекс) — обновляем её
     if (widget.existingIndex != null) {
-      // Берём существующую линейку из хранилища по индексу
       final existingRuler = AppStorage().rulers[widget.existingIndex!];
-      // Создаём обновлённую копию: имя оставляем прежним, даты и цели — текущие
+
       final updatedRuler = RulerSaveData(
-        name: existingRuler.name, // имя не меняем
+        name: existingRuler.name,
         start: widget.start,
         end: widget.end,
         goals: goalsToSave,
       );
-      // Сохраняем изменения через новый метод updateRuler (его нужно добавить в AppStorage)
+
       await AppStorage().updateRuler(widget.existingIndex!, updatedRuler);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Updated → Settings → Saved')),
         );
-        // При желании можно сразу закрыть экран:
-        // Navigator.pop(context);
       }
-      return; // Завершаем, ничего больше не делаем
+      return;
     }
 
-    // 3. Иначе (новая линейка) — работаем по старому сценарию
     if (!AppStorage().canSave) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -610,7 +561,6 @@ class _RulerScreenState extends State<RulerScreen> {
   }
 
   Future<void> _autoSaveIfExisting() async {
-    // Сохраняем только если это существующая линейка
     if (widget.existingIndex == null) return;
 
     final goalsToSave = _goals
@@ -634,8 +584,6 @@ class _RulerScreenState extends State<RulerScreen> {
     );
     await AppStorage().updateRuler(widget.existingIndex!, updatedRuler);
   }
-
-  // ── Виджеты ────────────────────────────────────────────────
 
   Widget _buildEditor() {
     final p = _editP!, y = _geo.sy(p), cx = _geo.cx(p);
@@ -688,12 +636,6 @@ class _RulerScreenState extends State<RulerScreen> {
       ),
     );
   }
-
-  // Widget _buildKbPreview(BuildContext ctx) --Тут был!
-
-  // ── AppBar action: кнопка "✓" ──────────────────────────────
-
-  // ── AppBar action: кнопка "S̶" ──────────────────────────────
 
   Widget _strikeBtn() {
     return ValueListenableBuilder<TextEditingValue>(
@@ -763,11 +705,8 @@ class _RulerScreenState extends State<RulerScreen> {
             ),
           ),
           actions: [
-            // ✓ Сделано — только для существующей цели
-            //if (editing && _editExisting != null) _doneBtn(),
-            // S̶ Зачёркивание — только при редактировании
             if (editing) _strikeBtn(),
-            // Сохранить
+
             if (_goals.isNotEmpty && widget.existingIndex == null)
               GestureDetector(
                 onTap: _onSave,
@@ -858,10 +797,6 @@ class _RulerScreenState extends State<RulerScreen> {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  PAINTER
-// ═══════════════════════════════════════════════════════════════
 
 class RulerPainter extends CustomPainter {
   final DateTime start, end, now;
@@ -1054,7 +989,7 @@ class RulerPainter extends CustomPainter {
       final y = g.sy(goal.progress);
       if (y < -40 || y > size.height + 40) continue;
       final cx = g.cx(goal.progress);
-      // Цвет гёте зависит от isDone
+
       final color = goal.isDone
           ? const Color(0xFF2A4A2A)
           : const Color(0xFF555570);
@@ -1136,7 +1071,6 @@ class RulerPainter extends CustomPainter {
                 .min(screenWidth - rightEdge - gap - 8.0, 160.0)
                 .clamp(40.0, 160.0);
 
-      // Стиль текста: если isDone — тусклее
       final baseStyle = TextStyle(
         color: goal.isDone
             ? const Color(0xFF444455)
@@ -1172,7 +1106,6 @@ class RulerPainter extends CustomPainter {
       }
       occupied.add(textY);
 
-      // Цвет линии и точки зависит от isDone
       final lineColor = goal.isDone
           ? const Color(0x332A5A2A)
           : const Color(0x55AAAAAA);
@@ -1193,8 +1126,6 @@ class RulerPainter extends CustomPainter {
         );
         canvas.drawCircle(Offset(lsX, y), 2.0, Paint()..color = dotColor);
 
-        // Галочка ✓ рядом с точкой если isDone
-
         tp.paint(canvas, Offset(math.max(8.0, leX - tp.width), textY));
       } else {
         final lsX = rightEdge + gap;
@@ -1208,8 +1139,6 @@ class RulerPainter extends CustomPainter {
             ..strokeCap = StrokeCap.round,
         );
         canvas.drawCircle(Offset(lsX, y), 2.0, Paint()..color = dotColor);
-
-        // if (goal.isDone) {
 
         tp.paint(canvas, Offset(lsX, textY));
       }

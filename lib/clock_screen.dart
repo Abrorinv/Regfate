@@ -4,10 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-// ═══════════════════════════════════════════════════════════════
-//  CLOCK SCREEN
-// ═══════════════════════════════════════════════════════════════
-
 class ClockScreen extends StatefulWidget {
   const ClockScreen({super.key});
   @override
@@ -82,14 +78,13 @@ class _ClockScreenState extends State<ClockScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false, // ← добавить эту строку
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color.fromARGB(255, 1, 1, 4),
 
       body: Stack(
         children: [
           Row(
             children: [
-              // ── Левая: 24ч ──────────────────────────────────────
               Expanded(
                 child: AnimatedBuilder(
                   animation: _tickCtrl,
@@ -100,12 +95,10 @@ class _ClockScreenState extends State<ClockScreen>
                 ),
               ),
               Container(width: 0.5, color: const Color(0xFF14142A)),
-              // ── Правая: годовое кольцо ───────────────────────────
               const Expanded(child: YearlyDiagram()),
             ],
           ),
 
-          // Подсказка поворота
           if (!_hintDone)
             Positioned(
               right: 16,
@@ -165,10 +158,6 @@ class _ClockScreenState extends State<ClockScreen>
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  24-ЧАСОВОЙ ЦИФЕРБЛАТ
-// ═══════════════════════════════════════════════════════════════
-
 class _Clock24Painter extends CustomPainter {
   final DateTime now;
   const _Clock24Painter({required this.now});
@@ -180,7 +169,6 @@ class _Clock24Painter extends CustomPainter {
     final c = Offset(cx, cy);
     final R = math.min(cx, cy) * 0.80;
 
-    // Фон — тёмный круг с едва заметным свечением
     canvas.drawCircle(
       c,
       R,
@@ -196,7 +184,6 @@ class _Clock24Painter extends CustomPainter {
         ).createShader(Rect.fromCircle(center: c, radius: R)),
     );
 
-    // Внешний тонкий контур
     canvas.drawCircle(
       c,
       R,
@@ -206,7 +193,6 @@ class _Clock24Painter extends CustomPainter {
         ..strokeWidth = 0.8,
     );
 
-    // Внутренний круг — декоративный
     canvas.drawCircle(
       c,
       R * 0.88,
@@ -216,7 +202,6 @@ class _Clock24Painter extends CustomPainter {
         ..strokeWidth = 0.9,
     );
 
-    // ── Деления и цифры ───────────────────────────────────────
     for (int h = 0; h < 24; h++) {
       final angle = -math.pi / 2 + h * (2 * math.pi / 24);
       final isMain = h % 6 == 0;
@@ -249,7 +234,6 @@ class _Clock24Painter extends CustomPainter {
           ..strokeCap = StrokeCap.round,
       );
 
-      // Цифры только на главных
       if (isMain) {
         final label = h == 0 ? '24' : '$h';
         final lr = R * 0.58;
@@ -275,10 +259,9 @@ class _Clock24Painter extends CustomPainter {
       }
     }
 
-    // ── Прогресс дня — тонкая дуга ────────────────────────────
     final dayProg =
         (now.hour * 3600 + now.minute * 60 + now.second) / (24 * 3600);
-    // Пройденное — чуть светлее
+
     canvas.drawArc(
       Rect.fromCircle(center: c, radius: R * 0.78),
       -math.pi / 2,
@@ -291,9 +274,6 @@ class _Clock24Painter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    // ── Стрелки ───────────────────────────────────────────────
-
-    // Минутная
     final minAngle =
         -math.pi / 2 + (now.minute + now.second / 60) * (2 * math.pi / 60);
     _hand(
@@ -305,14 +285,12 @@ class _Clock24Painter extends CustomPainter {
       const Color.fromARGB(255, 70, 70, 149),
     );
 
-    // Часовая (24ч — оборот за 24 часа)
     final hrAngle =
         -math.pi / 2 +
         (now.hour + now.minute / 60 + now.second / 3600) * (2 * math.pi / 24);
     _hand(canvas, c, hrAngle, R * 0.50, R * 0.013, const Color(0xFF5555AA));
 
     /*
-    // Секундная — тонкая синяя
     final secAngle = -math.pi / 2 + now.second * (2 * math.pi / 60);
     _hand(canvas, c, secAngle, R * 0.76, R * 0.004, const Color(0xFF64B5F6));
     // Хвост
@@ -326,7 +304,6 @@ class _Clock24Painter extends CustomPainter {
     );
 */
 
-    // Центр
     canvas.drawCircle(c, R * 0.022, Paint()..color = const Color(0xFF4A4A8A));
     canvas.drawCircle(c, R * 0.010, Paint()..color = const Color(0xFF64B5F6));
   }
@@ -353,10 +330,6 @@ class _Clock24Painter extends CustomPainter {
   bool shouldRepaint(_Clock24Painter o) => false;
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  ЗАМЕТКА
-// ═══════════════════════════════════════════════════════════════
-
 class YearNote {
   final int month;
   String text;
@@ -365,10 +338,6 @@ class YearNote {
   factory YearNote.fromJson(Map<String, dynamic> j) =>
       YearNote(month: j['month'] as int, text: j['text'] as String);
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  ГОДОВОЕ КОЛЬЦО — State
-// ═══════════════════════════════════════════════════════════════
 
 class YearlyDiagram extends StatefulWidget {
   const YearlyDiagram({super.key});
@@ -451,8 +420,6 @@ class _YearlyDiagramState extends State<YearlyDiagram>
     final innerR = outerR * 0.62;
     if (dist < innerR || dist > outerR) return;
 
-    // Против часовой: θ_m = -π/2 + rotation - m*(2π/12)
-    // Обратно: a = -π/2 + rotation - α → a/2π*12 = месяц
     double a = (-math.pi / 2 + _rotation - _ang(d.localPosition));
     a = a % (2 * math.pi);
     if (a < 0) a += 2 * math.pi;
@@ -585,9 +552,8 @@ class _YearlyDiagramState extends State<YearlyDiagram>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Название месяца по центру
             const SizedBox(height: 3),
-            // Поле ввода на всю ширину
+
             TextField(
               controller: _editCtrl,
               autofocus: false,
@@ -623,7 +589,7 @@ class _YearlyDiagramState extends State<YearlyDiagram>
               onSubmitted: (_) => _confirm(),
             ),
             const SizedBox(height: 5),
-            // Кнопки справа
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -697,14 +663,8 @@ class _YearlyDiagramState extends State<YearlyDiagram>
         ),
       ),
     );
-  } //widget _panel() {
+  }
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  PAINTER — ГОДОВОЕ КОЛЬЦО
-//  Цельное кольцо + едва заметные сезонные зоны поверх
-//  Направление: против часовой стрелки
-// ═══════════════════════════════════════════════════════════════
 
 class _RingPainter extends CustomPainter {
   final double rotation;
@@ -725,7 +685,6 @@ class _RingPainter extends CustomPainter {
     return now.difference(s).inSeconds / e.difference(s).inSeconds;
   }
 
-  // Угол месяца против часовой (0 = Янв, вверху)
   double _mAngle(int m) => -math.pi / 2 + rotation - m * (2 * math.pi / 12);
 
   @override
@@ -738,7 +697,6 @@ class _RingPainter extends CustomPainter {
     final ringW = outerR - innerR;
     final midR = (outerR + innerR) / 2;
 
-    // ── 1. Основное тело кольца — цельное, тёмное ─────────────
     canvas.drawCircle(
       c,
       midR,
@@ -748,27 +706,17 @@ class _RingPainter extends CustomPainter {
         ..strokeWidth = ringW,
     );
 
-    // ── 2. Сезонные зоны — очень тонкие полупрозрачные дуги ───
-    // Зима: дек(11)→янв(0)→фев(1)  — холодный синеватый
-    // Весна: мар(2)→апр(3)→май(4)  — едва зеленоватый
-    // Лето: июн(5)→июл(6)→авг(7)   — тёплый
-    // Осень: сен(8)→окт(9)→ноя(10) — бордоватый
     final seasons = [
-      (
-        const Color.fromARGB(55, 62, 62, 143),
-        11,
-        3,
-      ), // Зима: с ноя(11) на 3 месяца
-      (const Color.fromARGB(55, 36, 103, 36), 2, 4), // Весна
-      (const Color.fromARGB(52, 85, 60, 15), 6, 3), // Лето
-      (const Color.fromARGB(48, 72, 25, 25), 8, 3), // Осень
+      (const Color.fromARGB(55, 62, 62, 143), 11, 3),
+      (const Color.fromARGB(55, 36, 103, 36), 2, 4),
+      (const Color.fromARGB(52, 85, 60, 15), 6, 3),
+      (const Color.fromARGB(48, 72, 25, 25), 8, 3),
     ];
 
     for (final s in seasons) {
       final col = s.$1;
       final startMonth = s.$2;
       final count = s.$3;
-      // против часовой: начало у startMonth, дуга = -count*segAngle
       final startAngle = _mAngle(startMonth);
       final sweepAngle = -count * (2 * math.pi / 12);
       canvas.drawArc(
@@ -783,7 +731,6 @@ class _RingPainter extends CustomPainter {
       );
     }
 
-    // ── 3. Внешний и внутренний контуры ───────────────────────
     canvas.drawCircle(
       c,
       outerR,
@@ -801,7 +748,6 @@ class _RingPainter extends CustomPainter {
         ..strokeWidth = 0.7,
     );
 
-    // ── 4. Гёте (12 месячных засечек) ─────────────────────────
     const mNames = [
       'Jan',
       'Feb',
@@ -824,7 +770,6 @@ class _RingPainter extends CustomPainter {
       final hasNote = noteSet.contains(m + 1);
       final isHL = highlightMonth == m + 1;
 
-      // Гёте как у линейки — от края до края с отступом
       final pad = ringW * 0.18;
       final r1 = innerR + pad;
       final r2 = outerR - pad;
@@ -846,7 +791,6 @@ class _RingPainter extends CustomPainter {
           ..strokeCap = StrokeCap.round,
       );
 
-      // Подписи — снаружи кольца, янв + кварталы
       if (isJan || m % 3 == 0) {
         final lr = outerR + 12;
         final tp = TextPainter(
@@ -872,7 +816,6 @@ class _RingPainter extends CustomPainter {
         );
       }
 
-      // Точка у гёте с заметкой
       if (hasNote) {
         canvas.drawCircle(
           Offset(
@@ -885,11 +828,9 @@ class _RingPainter extends CustomPainter {
       }
     }
 
-    // ── 5. "now" маркер ───────────────────────────────────────
     final nowAngle = -math.pi / 2 + rotation - _nowProg * 2 * math.pi;
     final nPad = ringW * 0.18;
 
-    // Подсветка — тонкая яркая дуга от января до now
     canvas.drawArc(
       Rect.fromCircle(center: c, radius: midR),
       -math.pi / 2 + rotation,
@@ -901,7 +842,6 @@ class _RingPainter extends CustomPainter {
         ..strokeWidth = ringW * 0.5,
     );
 
-    // Черта now
     canvas.drawLine(
       Offset(
         cx + (innerR + nPad) * math.cos(nowAngle),
@@ -917,7 +857,6 @@ class _RingPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    // Точка на внешнем крае
     canvas.drawCircle(
       Offset(
         cx + outerR * math.cos(nowAngle),
@@ -927,7 +866,6 @@ class _RingPainter extends CustomPainter {
       Paint()..color = const Color(0xFF64B5F6),
     );
 
-    // "now" подпись
     final ntp = TextPainter(
       text: const TextSpan(
         text: 'now',
@@ -949,7 +887,6 @@ class _RingPainter extends CustomPainter {
       ),
     );
 
-    // ── 6. Год в центре ───────────────────────────────────────
     final ytp = TextPainter(
       text: TextSpan(
         text: '${now.year}',

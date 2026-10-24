@@ -4,14 +4,6 @@ import 'package:flutter/services.dart';
 import 'models.dart';
 import 'package:vibration/vibration.dart';
 
-// ═══════════════════════════════════════════════════════════════
-//  ТОЧКА ВХОДА — EntireLife
-// ═══════════════════════════════════════════════════════════════
-
-/// Главный экран EntireLife. Управляет шагами:
-///   1. Ввод даты рождения (portrait, только первый раз)
-///   2. Экран подготовки — поворот телефона (portrait → landscape)
-///   3. Сам экран жизненной линейки (landscape, шаги 3–8)
 class EntireLifeScreen extends StatefulWidget {
   const EntireLifeScreen({super.key});
 
@@ -35,20 +27,15 @@ class _EntireLifeScreenState extends State<EntireLifeScreen> {
     if (!mounted) return;
     setState(() {
       _step = AppStorage().birthDate != null
-          ? _ELStep
-                .main // ← сразу main, минуя landscapePrepare
+          ? _ELStep.main
           : _ELStep.birthInput;
     });
   }
 
-  /// Вызывается после сохранения даты рождения.
   void _onBirthDateSaved() => setState(() => _step = _ELStep.main);
-
-  /// Вызывается когда пользователь повернул телефон и готов войти.
 
   @override
   void dispose() {
-    // Восстанавливаем все ориентации при уходе с экрана
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -69,10 +56,6 @@ class _EntireLifeScreenState extends State<EntireLifeScreen> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  ШАГ 1 — Ввод даты рождения (portrait)
-// ═══════════════════════════════════════════════════════════════
-
 class _BirthInputScreen extends StatefulWidget {
   final VoidCallback onSaved;
   const _BirthInputScreen({required this.onSaved});
@@ -83,11 +66,8 @@ class _BirthInputScreen extends StatefulWidget {
 
 class _BirthInputScreenState extends State<_BirthInputScreen>
     with SingleTickerProviderStateMixin {
-  // Барабанные пикеры
   int _day = 1, _month = 1, _year = 2000;
   late FixedExtentScrollController _dayCtrl, _monthCtrl, _yearCtrl;
-
-  // Анимация появления
   late AnimationController _fadeCtrl;
   late Animation<double> _fadeAnim;
 
@@ -106,10 +86,8 @@ class _BirthInputScreenState extends State<_BirthInputScreen>
     'Dec',
   ];
 
-  // Максимальное количество дней для текущего месяца/года
   int get _maxDay => DateTime(_year, _month + 1, 0).day;
 
-  // Список дней с учётом текущего месяца
   List<String> get _dayItems =>
       List.generate(_maxDay, (i) => (i + 1).toString().padLeft(2, '0'));
 
@@ -124,7 +102,7 @@ class _BirthInputScreenState extends State<_BirthInputScreen>
     final now = DateTime.now();
     _day = 1;
     _month = now.month;
-    _year = now.year - 25; // По умолчанию ~25 лет назад
+    _year = now.year - 25;
 
     _dayCtrl = FixedExtentScrollController(initialItem: _day - 1);
     _monthCtrl = FixedExtentScrollController(initialItem: _month - 1);
@@ -147,7 +125,6 @@ class _BirthInputScreenState extends State<_BirthInputScreen>
     super.dispose();
   }
 
-  /// Если день выходит за пределы нового месяца — скроллим к последнему дню.
   void _clampDay() {
     if (_day > _maxDay) {
       _day = _maxDay;
@@ -172,10 +149,8 @@ class _BirthInputScreenState extends State<_BirthInputScreen>
       backgroundColor: const Color(0xFF05050D),
       body: Stack(
         children: [
-          // Фоновые звёзды (статичные)
           const Positioned.fill(child: _AnimatedStarfield(starCount: 320)),
 
-          // Контент
           FadeTransition(
             opacity: _fadeAnim,
             child: SafeArea(
@@ -183,7 +158,6 @@ class _BirthInputScreenState extends State<_BirthInputScreen>
                 children: [
                   const SizedBox(height: 48),
 
-                  // ── Заголовок ──────────────────────────────────
                   const _GoldGlowText(
                     '✦ entire life ✦',
                     fontSize: 13,
@@ -202,13 +176,11 @@ class _BirthInputScreenState extends State<_BirthInputScreen>
 
                   const SizedBox(height: 56),
 
-                  // ── Барабанные пикеры ──────────────────────────
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // День
                         _DrumPicker(
                           controller: _dayCtrl,
                           items: _dayItems,
@@ -219,7 +191,7 @@ class _BirthInputScreenState extends State<_BirthInputScreen>
                           },
                         ),
                         _drumSeparator(),
-                        // Месяц
+
                         _DrumPicker(
                           controller: _monthCtrl,
                           items: _months,
@@ -230,7 +202,7 @@ class _BirthInputScreenState extends State<_BirthInputScreen>
                           },
                         ),
                         _drumSeparator(),
-                        // Год
+
                         _DrumPicker(
                           controller: _yearCtrl,
                           items: _yearItems,
@@ -246,7 +218,6 @@ class _BirthInputScreenState extends State<_BirthInputScreen>
 
                   const Spacer(),
 
-                  // ── Кнопка сохранения ──────────────────────────
                   GestureDetector(
                     onTap: _save,
                     child: Container(
@@ -300,8 +271,6 @@ class _BirthInputScreenState extends State<_BirthInputScreen>
   );
 }
 
-// ── Барабанный пикер ───────────────────────────────────────────
-
 class _DrumPicker extends StatefulWidget {
   final FixedExtentScrollController controller;
   final List<String> items;
@@ -344,7 +313,6 @@ class _DrumPickerState extends State<_DrumPicker> {
       height: itemH * 5,
       child: Stack(
         children: [
-          // Список
           ListWheelScrollView.useDelegate(
             controller: widget.controller,
             itemExtent: itemH,
@@ -377,7 +345,6 @@ class _DrumPickerState extends State<_DrumPicker> {
             ),
           ),
 
-          // Затухание сверху
           Positioned(
             top: 0,
             left: 0,
@@ -396,7 +363,6 @@ class _DrumPickerState extends State<_DrumPicker> {
             ),
           ),
 
-          // Затухание снизу
           Positioned(
             bottom: 0,
             left: 0,
@@ -415,7 +381,6 @@ class _DrumPickerState extends State<_DrumPicker> {
             ),
           ),
 
-          // Линии вокруг выбранного
           Center(
             child: IgnorePointer(
               child: SizedBox(
@@ -435,15 +400,6 @@ class _DrumPickerState extends State<_DrumPicker> {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  ШАГ 2 — Подготовка: поверни телефон (portrait → landscape)
-// ═══════════════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════════════
-//  ШАГ 3–8 (заглушка) — сам экран EntireLife
-//  Будет реализован в следующих шагах
-// ═══════════════════════════════════════════════════════════════
 
 class _EntireLifeMain extends StatefulWidget {
   final DateTime birthDate;
@@ -516,9 +472,7 @@ class _EntireLifeMainState extends State<_EntireLifeMain>
       body: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
-          // Звёздное небо — стоит на месте
           const Positioned.fill(child: _StaticStarfield(starCount: 320)),
-          // Линейка жизни — въезжает с правой стороны
           Positioned.fill(
             child: SlideTransition(
               position: _slideAnim,
@@ -541,30 +495,18 @@ class _EntireLifeMainState extends State<_EntireLifeMain>
               highlightColor: Colors.transparent,
             ),
           ),
-          // Подсказка поворота — как в ClockScreen но золотая
-          Positioned(
-            right: 16,
-            bottom: 12,
-            child: _ShakingLandscapeLabel(), // <-- вставь это
-          ),
+          Positioned(right: 16, bottom: 12, child: _ShakingLandscapeLabel()),
         ],
       ),
     );
   }
 }
 
-// ── Кривая торможения поезда ───────────────────────────────────
 class _TrainBrakeCurve extends Curve {
   const _TrainBrakeCurve();
   @override
   double transform(double t) => 1.0 - math.pow(1.0 - t, 5.0).toDouble();
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  ВСПОМОГАТЕЛЬНЫЕ ВИДЖЕТЫ
-// ═══════════════════════════════════════════════════════════════
-
-// ── Статичное звёздное небо ────────────────────────────────────
 
 class _StaticStarfield extends StatelessWidget {
   final int starCount;
@@ -591,23 +533,20 @@ class _StarfieldPainter extends CustomPainter {
       final r = rng.nextDouble() * 1.6 + 0.2;
       final bright = rng.nextDouble();
 
-      // Яркость звезды: от почти невидимой до заметной
       final alpha = (0.15 + bright * 0.75).clamp(0.0, 1.0);
 
-      // Небольшая часть звёзд — синеватые, остальные белые/жёлтые
       final Color color;
       final colorRoll = rng.nextDouble();
       if (colorRoll < 0.12) {
-        color = Color.fromRGBO(160, 180, 255, alpha); // голубые
+        color = Color.fromRGBO(160, 180, 255, alpha);
       } else if (colorRoll < 0.22) {
-        color = Color.fromRGBO(255, 230, 180, alpha); // тёплые
+        color = Color.fromRGBO(255, 230, 180, alpha);
       } else {
-        color = Color.fromRGBO(220, 220, 235, alpha); // белые
+        color = Color.fromRGBO(220, 220, 235, alpha);
       }
 
       final paint = Paint()..color = color;
 
-      // Крупные звёзды рисуем с мягким свечением
       if (r > 1.2) {
         canvas.drawCircle(
           Offset(x, y),
@@ -620,7 +559,6 @@ class _StarfieldPainter extends CustomPainter {
       canvas.drawCircle(Offset(x, y), r, paint);
     }
 
-    // Несколько очень ярких "больших" звёзд с крестообразными лучами
     final rng2 = math.Random(seed + 1);
     for (int i = 0; i < 6; i++) {
       final x = rng2.nextDouble() * size.width;
@@ -628,7 +566,6 @@ class _StarfieldPainter extends CustomPainter {
       const r = 2.0;
       const alpha = 0.85;
 
-      // Свечение
       canvas.drawCircle(
         Offset(x, y),
         r * 6,
@@ -642,7 +579,6 @@ class _StarfieldPainter extends CustomPainter {
         Paint()..color = const Color.fromRGBO(240, 240, 255, alpha),
       );
 
-      // Лучи
       final rayPaint = Paint()
         ..color = const Color.fromRGBO(240, 240, 255, 0.25)
         ..strokeWidth = 0.6
@@ -661,10 +597,6 @@ class _StarfieldPainter extends CustomPainter {
   @override
   bool shouldRepaint(_StarfieldPainter o) => false;
 }
-
-// ── Анимированное звёздное небо (мерцание) ────────────────────
-// Используется только на главном экране EntireLife.
-// На экранах ввода и подготовки — статичное (_StaticStarfield).
 
 class _AnimatedStarfield extends StatefulWidget {
   final int starCount;
@@ -727,11 +659,10 @@ class _AnimatedStarfieldPainter extends CustomPainter {
       final y = rng.nextDouble() * size.height;
       final r = rng.nextDouble() * 1.6 + 0.2;
       final base = 0.18 + rng.nextDouble() * 0.70;
-      final phase = rng.nextDouble() * math.pi * 2; // уникальная фаза
-      final speed = 0.4 + rng.nextDouble() * 0.8; // скорость мерцания
+      final phase = rng.nextDouble() * math.pi * 2;
+      final speed = 0.4 + rng.nextDouble() * 0.8;
       final roll = rng.nextDouble();
 
-      // Мерцание: плавное sin с индивидуальной фазой и скоростью
       final flicker =
           0.75 + 0.25 * math.sin(time * math.pi * 2 * speed + phase);
       final alpha = (base * flicker).clamp(0.0, 1.0);
@@ -756,7 +687,6 @@ class _AnimatedStarfieldPainter extends CustomPainter {
       canvas.drawCircle(Offset(x, y), r, Paint()..color = color);
     }
 
-    // Яркие звёзды с лучами — тоже мерцают
     final rng2 = math.Random(seed + 1);
     for (int i = 0; i < 7; i++) {
       final x = rng2.nextDouble() * size.width;
@@ -794,10 +724,6 @@ class _AnimatedStarfieldPainter extends CustomPainter {
   @override
   bool shouldRepaint(_AnimatedStarfieldPainter o) => o.time != time;
 }
-
-// ── Иконка телефона (нарисованная) ────────────────────────────
-
-// ── Текст с золотым свечением ──────────────────────────────────
 
 class _GoldGlowText extends StatelessWidget {
   final String text;
@@ -838,11 +764,6 @@ class _GoldGlowText extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  ЛИНЕЙКА ЖИЗНИ — геометрия + ромбы (Шаг 5)
-// ═══════════════════════════════════════════════════════════════
-
-// Вычисляет количество серых ромбов (будущее) по возрасту
 int _greyCount(int ageYears) {
   if (ageYears < 15) return 40;
   if (ageYears < 30) return 30;
@@ -866,7 +787,6 @@ class _LifeRulerViewState extends State<_LifeRulerView>
   void initState() {
     super.initState();
 
-    // Дыхание — медленное, едва заметное
     _breathCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3800),
@@ -876,7 +796,6 @@ class _LifeRulerViewState extends State<_LifeRulerView>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _breathCtrl, curve: Curves.easeInOut));
 
-    // Пульс — быстрый, как сердце
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -920,7 +839,6 @@ class _LifeRulerPainter extends CustomPainter {
     required this.pulseValue,
   });
 
-  // ── Возраст в полных годах ─────────────────────────────────
   int get _ageYears {
     final now = DateTime.now();
     int age = now.year - birthDate.year;
@@ -931,7 +849,6 @@ class _LifeRulerPainter extends CustomPainter {
     return age.clamp(0, 150);
   }
 
-  // ── Точная дробная часть текущего года (0.0..1.0) ─────────
   double get _ageFraction {
     final now = DateTime.now();
     final thisYearBirthday = DateTime(now.year, birthDate.month, birthDate.day);
@@ -945,10 +862,6 @@ class _LifeRulerPainter extends CustomPainter {
     return (since / total).clamp(0.0, 1.0);
   }
 
-  // ── Геометрия дуги ─────────────────────────────────────────
-  // p=0 → рождение (правый край)
-  // p=1 → смерть   (левый край, чуть выше)
-  // Прогиб вниз, пик смещён левее центра (pk=0.58)
   Offset _pos(double p, Size s) {
     final x = s.width * 0.94 - p * s.width * 0.88;
     const pk = 0.58;
@@ -959,7 +872,6 @@ class _LifeRulerPainter extends CustomPainter {
     return Offset(x, y);
   }
 
-  // ── Размер ромба зависит от общего числа ──────────────────
   double _diamondSize(int total) {
     const base = 8.5;
     const minSize = 5.5;
@@ -976,7 +888,6 @@ class _LifeRulerPainter extends CustomPainter {
     final totalC = age + greyC;
     final dSz = _diamondSize(totalC);
 
-    // ── 1. Дуга ───────────────────────────────────────────────
     final arcPath = Path();
     const steps = 160;
     for (int i = 0; i <= steps; i++) {
@@ -995,7 +906,6 @@ class _LifeRulerPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    // ── 2. Ромбы ──────────────────────────────────────────────
     for (int i = 0; i < totalC; i++) {
       final p = totalC > 1 ? i / (totalC - 1).toDouble() : 0.0;
       final pt = _pos(p, size);
@@ -1010,19 +920,12 @@ class _LifeRulerPainter extends CustomPainter {
       }
     }
 
-    // ── 3. Стикер рождения ────────────────────────────────────
     _drawBirthSticker(canvas, _pos(0.0, size), size);
-
-    // ── 4. Стикер смерти ──────────────────────────────────────
     _drawDeathSticker(canvas, _pos(1.0, size), size);
-
-    // ── 5. Маркер возраста (дыхание + пульс) ─────────────────
     final ageP = totalC > 1 ? (age + fraction) / (totalC - 1).toDouble() : 0.0;
     final agePt = _pos(ageP.clamp(0.0, 1.0), size);
     _drawAgeMarker(canvas, agePt, dSz);
   }
-
-  // ── Золотой ромб ──────────────────────────────────────────
 
   void _drawGoldDiamond(Canvas canvas, Offset c, double sz) {
     final path = _diamondPath(c, sz);
@@ -1053,8 +956,6 @@ class _LifeRulerPainter extends CustomPainter {
         ..strokeJoin = StrokeJoin.round,
     );
   }
-
-  // ── Серебряный ромб ───────────────────────────────────────
 
   void _drawGreyDiamond(Canvas canvas, Offset c, double sz, double opacity) {
     final path = _diamondPath(c, sz);
@@ -1087,8 +988,6 @@ class _LifeRulerPainter extends CustomPainter {
     );
   }
 
-  // ── Контур ромба ──────────────────────────────────────────
-
   Path _diamondPath(Offset c, double sz) {
     final hw = sz * 0.65;
     final hh = sz;
@@ -1099,8 +998,6 @@ class _LifeRulerPainter extends CustomPainter {
       ..lineTo(c.dx - hw, c.dy)
       ..close();
   }
-
-  // ── Стикер рождения ───────────────────────────────────────
 
   void _drawBirthSticker(Canvas canvas, Offset pt, Size s) {
     canvas.drawCircle(
@@ -1135,8 +1032,6 @@ class _LifeRulerPainter extends CustomPainter {
     dp.paint(canvas, pt.translate(-dp.width / 2, -tp.height - dp.height - 8));
   }
 
-  // ── Стикер смерти ─────────────────────────────────────────
-
   void _drawDeathSticker(Canvas canvas, Offset pt, Size s) {
     canvas.drawCircle(
       pt,
@@ -1156,15 +1051,11 @@ class _LifeRulerPainter extends CustomPainter {
     tp.paint(canvas, pt.translate(-tp.width / 2, -tp.height - 6));
   }
 
-  // ── Маркер возраста: дыхание + пульс ─────────────────────
-
   void _drawAgeMarker(Canvas canvas, Offset pt, double dSz) {
-    // Овал дышит: от baseR до baseR + delta
     final baseR = dSz * 2.4;
     final delta = dSz * 0.5;
     final radius = baseR + delta * breathValue;
 
-    // Внешнее свечение (дышит)
     canvas.drawCircle(
       pt,
       radius * 1.6,
@@ -1173,7 +1064,6 @@ class _LifeRulerPainter extends CustomPainter {
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.9),
     );
 
-    // Тело овала — почти прозрачное
     canvas.drawOval(
       Rect.fromCenter(center: pt, width: radius * 1.1, height: radius * 1.55),
       Paint()
@@ -1181,7 +1071,6 @@ class _LifeRulerPainter extends CustomPainter {
         ..style = PaintingStyle.fill,
     );
 
-    // Контур овала
     canvas.drawOval(
       Rect.fromCenter(center: pt, width: radius * 1.1, height: radius * 1.55),
       Paint()
@@ -1190,10 +1079,8 @@ class _LifeRulerPainter extends CustomPainter {
         ..strokeWidth = 0.8,
     );
 
-    // Красная точка — пульсирует
     final pulseR = dSz * 0.38 + dSz * 0.22 * pulseValue;
 
-    // Свечение пульса
     canvas.drawCircle(
       pt,
       pulseR * 2.2,
@@ -1202,7 +1089,6 @@ class _LifeRulerPainter extends CustomPainter {
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
     );
 
-    // Тело красной точки
     canvas.drawCircle(
       pt,
       pulseR,
@@ -1216,8 +1102,6 @@ class _LifeRulerPainter extends CustomPainter {
       o.breathValue != breathValue ||
       o.pulseValue != pulseValue;
 }
-
-// Класс тряски и затухания лейбла "landscape" в правом нижнем углу.
 
 class _ShakingLandscapeLabel extends StatefulWidget {
   @override
@@ -1234,11 +1118,10 @@ class _ShakingLandscapeLabelState extends State<_ShakingLandscapeLabel>
     super.initState();
     _shakeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700), // темп тряски
+      duration: const Duration(milliseconds: 700),
     );
-    _shakeController.repeat(reverse: true); // мотание туда-сюда
+    _shakeController.repeat(reverse: true);
 
-    // Через 3 секунды остановить тряску и начать плавное исчезновение
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
       _shakeController.stop();
@@ -1287,7 +1170,7 @@ class _ShakingLandscapeLabelState extends State<_ShakingLandscapeLabel>
     );
 
     return AnimatedOpacity(
-      duration: const Duration(seconds: 2), // затухание за 2 сек
+      duration: const Duration(seconds: 2),
       opacity: _fadeOut ? 0.0 : 1.0,
       child: AnimatedBuilder(
         animation: _shakeController,
